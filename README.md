@@ -21,6 +21,11 @@
 > CCTV 실시간 탐지는 이번 과제 범위가 아니다. 예측된 위험구간을 우선순위로
 > 카메라를 배치하는 후속 단계로만 문서에 남긴다.
 
+> **설계 결정의 근거**(왜 이렇게 만들었는지, 뭐가 확정이고 뭐가 아직 검증
+> 필요한지)는 이 README가 아니라 [`docs/DESIGN_DECISIONS.md`](docs/DESIGN_DECISIONS.md)
+> 에 계속 누적해서 기록한다. 새로운 결정을 내리거나 기존 결정을 재검토할 때마다
+> 그 문서를 갱신한다.
+
 ## 접근 방법
 
 ### 1단계 — 데이터 파이프라인
@@ -28,9 +33,29 @@
 로드킬 지점·서식지·기상·지형 데이터를 이 구간에 공간 조인한다.
 
 ### 2단계 — 베이스라인 모델
-`scikit-learn` RandomForest → `XGBoost`. 로드킬은 희소 이벤트이므로
-클래스 불균형 처리(`imbalanced-learn`)와 PR-AUC 중심 평가가 필수다.
-SHAP으로 뽑은 변수 기여도는 3단계 정책 브리핑의 근거 자료로 재사용한다.
+`scikit-learn` RandomForest → `XGBoost`. 로드킬은 희소 이벤트이므로 두 가지를
+설계 기준으로 삼았다:
+
+- **불균형 처리**: 오버샘플링(SMOTE 등) 대신 클래스 가중치
+  (`class_weight="balanced_subsample"` / `scale_pos_weight`)를 사용한다.
+  CV 폴드마다 학습 데이터로만 다시 계산해야 하는 오버샘플링과 달리 누수
+  위험이 없고 구현이 단순하다. `imbalanced-learn`은 의존성으로 남겨뒀지만
+  기본 경로에서는 쓰지 않는다.
+- **평가**: 음성이 압도적으로 많으면 ROC-AUC가 낙관적으로 나오므로
+  PR-AUC(average precision)를 주 지표로 삼고, 분류 임계값도 고정 0.5가
+  아니라 F1을 최대화하는 지점을 탐색해서 쓴다 (`evaluate.py`).
+- **분할 전략**: 같은 구간의 서로 다른 날짜가 학습·평가에 동시에 들어가면
+  공간적 정보 누수가 생기므로, 기본값은 구간(`segment_id`) 단위로 통째로
+  나누는 spatial split이다. "미래 시점 예측력"을 보고 싶을 때는
+  `--split temporal --cutoff-date` 로 날짜 기준 분할도 가능하다.
+
+SHAP(`interpret.py`)으로 뽑은 변수 기여도는 4단계 정책 브리핑의 근거 자료로
+그대로 재사용한다.
+
+> 구현은 끝났지만 아직 실제 데이터가 없어 실행은 못 해봤다. 대신
+> `tests/test_baseline_pipeline.py` 의 합성 데이터로 전체 흐름(로딩 → 분할 →
+> 전처리 → 학습 → 평가 → SHAP)이 에러 없이 도는 것만 확인한 상태다 —
+> 지표 수치 자체는 의미가 없다.
 
 ### 3단계 — GNN 고도화
 베이스라인은 각 구간을 독립 샘플로 보지만, 실제 로드킬은 인접 구간으로
@@ -75,12 +100,23 @@ roadkill-risk-prediction/
 │   │   └── load_terrain.py   #   DEM 고도 · 경사
 │   ├── models/
 │   │   ├── baseline/         # RandomForest, XGBoost
+│   │   │   ├── schema.py     #   모델 테이블 컬럼 정의
+│   │   │   ├── dataset.py    #   로딩 · 계절 피처 · spatial/temporal split
+│   │   │   ├── pipeline.py   #   공통 전처리 (결측치 · 원-핫 인코딩)
+│   │   │   ├── models.py     #   RF/XGBoost 파이프라인 생성
+│   │   │   ├── evaluate.py   #   PR-AUC 중심 평가 지표
+│   │   │   ├── interpret.py  #   SHAP 변수 기여도 (정책 브리핑 재사용)
+│   │   │   └── train.py      #   학습 CLI 진입점
 │   │   └── gnn/              # GCN, GraphSAGE (PyTorch Geometric)
 │   ├── rag/                  # 임베딩, ChromaDB 구축, 검색
 │   ├── llm/                  # 정책 브리핑 생성, 챗봇 응답
 │   └── dashboard/            # Streamlit 대시보드
+├── tests/
+│   └── test_baseline_pipeline.py  # 합성 데이터로 베이스라인 파이프라인 구조 검증
+├── models/baseline/          # 학습된 모델 아티팩트 (.joblib, 커밋 제외)
 ├── reports/figures/          # 결과 그림 (커밋 제외)
-├── docs/                     # 설계 문서, 발표 자료
+├── docs/
+│   └── DESIGN_DECISIONS.md   # 설계 결정 근거 기록 (계속 업데이트)
 ├── scripts/
 │   ├── setup.sh              # macOS/Linux 자동 셋업
 │   └── setup.ps1             # Windows 자동 셋업
@@ -189,14 +225,18 @@ python -c "import pandas, geopandas, sklearn, xgboost, torch, torch_geometric, s
 
 `OK` 가 출력되면 모든 핵심 의존성이 정상 설치된 것이다.
 
-### 5. 실행 (각 단계 구현 후)
+### 5. 실행
 
 ```bash
-# 전처리 — 구간 생성 및 피처 결합
+# 전처리 — 구간 생성 및 피처 결합 (구현 예정)
 python -m src.preprocessing
 
-# 베이스라인 학습
+# 베이스라인 파이프라인 구조 검증 (합성 데이터, 실제 데이터 없이도 지금 실행 가능)
+python tests/test_baseline_pipeline.py
+
+# 베이스라인 학습 (data/processed/model_table.parquet 준비 후)
 python -m src.models.baseline.train
+python -m src.models.baseline.train --split temporal --cutoff-date 2025-06-01
 
 # GNN 학습
 python -m src.models.gnn.train
@@ -213,10 +253,12 @@ streamlit run src/dashboard/app.py
 - [x] 프로젝트 스캐폴딩, 의존성 정의
 - [x] 전처리 모듈 인터페이스 설계 (스켈레톤)
 - [x] 환경 재현성 확보 — 자동 셋업 스크립트, `.python-version`
+- [x] 베이스라인 파이프라인 구현 — RandomForest, XGBoost, PR-AUC 평가, SHAP 해석
+      (합성 데이터로 구조 검증 완료, 실제 데이터 학습은 전처리 완료 후)
 - [ ] 공공데이터 수집 및 `data/raw/` 배치
 - [ ] 전처리 구현 — 구간 분할 및 피처 결합
 - [ ] EDA
-- [ ] 베이스라인 (RandomForest, XGBoost)
+- [ ] 베이스라인 실제 데이터 학습 및 성능 확인
 - [ ] GNN (GCN / GraphSAGE)
 - [ ] RAG 파이프라인
 - [ ] 정책 브리핑 생성
