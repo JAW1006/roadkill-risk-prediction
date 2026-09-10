@@ -116,6 +116,7 @@ roadkill-risk-prediction/
 ├── models/baseline/          # 학습된 모델 아티팩트 (.joblib, 커밋 제외)
 ├── reports/figures/          # 결과 그림 (커밋 제외)
 ├── docs/
+│   ├── PROGRESS.md           # 진행 상황 한눈에 보기 (계속 업데이트)
 │   └── DESIGN_DECISIONS.md   # 설계 결정 근거 기록 (계속 업데이트)
 ├── scripts/
 │   ├── setup.sh              # macOS/Linux 자동 셋업
@@ -249,6 +250,9 @@ streamlit run src/dashboard/app.py
 ```
 
 ## 진행 상황
+
+> 모듈별 상세 현황·블로커·다음 액션은 [`docs/PROGRESS.md`](docs/PROGRESS.md)에서
+> 한눈에 볼 수 있다. 아래는 요약 체크리스트.
 
 - [x] 프로젝트 스캐폴딩, 의존성 정의
 - [x] 전처리 모듈 인터페이스 설계 (스켈레톤)
