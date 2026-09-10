@@ -1,0 +1,55 @@
+# ─────────────────────────────────────────────────────────────
+# 로드킬 위험구간 예측 프로젝트 — Python 3.12+ (권장: 3.13)
+#   pip install -r requirements.txt
+# 버전 확인 기준일: 2026-09-10
+# ─────────────────────────────────────────────────────────────
+
+# --- 데이터 처리 / 수치 연산 ---
+numpy==2.5.3
+pandas==3.0.5
+scipy==1.18.1
+joblib==1.6.0
+tqdm==4.70.0
+requests==2.34.2
+python-dotenv==1.2.3
+pyyaml==6.0.3
+
+# --- 공간정보(GIS) ---
+geopandas==1.1.4
+shapely==2.1.2
+pyproj==3.8.0
+fiona==1.10.1
+rasterio==1.5.1          # DEM(고도·경사) 래스터 처리
+rtree==1.4.1             # 공간 인덱스 (sjoin 가속)
+osmnx==2.1.1             # 도로망 그래프 구성 보조 (GNN 인접행렬)
+networkx==3.6.1
+
+# --- 머신러닝 베이스라인 ---
+scikit-learn==1.9.0
+xgboost==3.4.1
+imbalanced-learn==0.14.2  # 로드킬 = 희소 이벤트 → 클래스 불균형 대응
+shap==0.52.0              # 변수 중요도 해석 (정책 브리핑 근거로 사용)
+
+# --- GNN (그래프 신경망) ---
+torch==2.14.0
+torch-geometric==2.8.0.post1
+
+# --- LLM (정책 브리핑 / 챗봇) ---
+anthropic==1.4.0          # Claude API (claude-haiku-4-5)
+
+# --- RAG (임베딩 + 벡터DB) ---
+sentence-transformers==6.0.1
+chromadb==1.5.9
+
+# --- 대시보드 / 시각화 ---
+streamlit==1.63.0
+folium==0.20.0
+streamlit-folium==0.27.4
+pydeck==0.9.3
+matplotlib==3.11.1
+seaborn==0.13.2
+plotly==7.0.0
+
+# --- 탐색적 분석 ---
+jupyter==1.1.1
+ipykernel==7.3.0

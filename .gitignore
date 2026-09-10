@@ -1,0 +1,81 @@
+# ── 데이터 (원본은 절대 커밋하지 않음) ─────────────────────────
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/interim/
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.gpkg
+*.geojson
+*.tif
+*.tiff
+*.parquet
+*.csv
+*.xlsx
+!docs/**/*.csv
+
+# ── 비밀정보 ────────────────────────────────────────────────
+.env
+.env.local
+*.pem
+*.key
+
+# ── 벡터 DB / 모델 아티팩트 ──────────────────────────────────
+chroma_db/
+.chroma/
+models_store/
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.onnx
+
+# ── Python ─────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ── 가상환경 ────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Jupyter ────────────────────────────────────────────────
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# ── 테스트 / 린트 캐시 ───────────────────────────────────────
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ── Streamlit ──────────────────────────────────────────────
+.streamlit/secrets.toml
+
+# ── QGIS (로컬 전처리용) ─────────────────────────────────────
+*.qgz~
+*.qgs~
+*.qgd
+
+# ── 결과물 ─────────────────────────────────────────────────
+reports/figures/*
+!reports/figures/.gitkeep
+
+# ── OS / IDE ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
