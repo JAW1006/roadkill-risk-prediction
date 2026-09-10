@@ -13,6 +13,14 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# `streamlit run src/dashboard/app.py`는 이 파일이 있는 디렉터리(src/dashboard)만
+# sys.path에 넣고 실행하므로, 실행 위치나 방식과 무관하게 `src.*` 절대 임포트가
+# 항상 되도록 프로젝트 루트를 직접 추가한다.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 import streamlit as st
 
 from src.dashboard import components
