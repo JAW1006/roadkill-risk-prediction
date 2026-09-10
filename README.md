@@ -110,7 +110,12 @@ roadkill-risk-prediction/
 │   │   └── gnn/              # GCN, GraphSAGE (PyTorch Geometric)
 │   ├── rag/                  # 임베딩, ChromaDB 구축, 검색
 │   ├── llm/                  # 정책 브리핑 생성, 챗봇 응답
-│   └── dashboard/            # Streamlit 대시보드
+│   └── dashboard/            # Streamlit 대시보드 (목업 데이터 뼈대 완료)
+│       ├── mock_data.py      #   합성 구간 데이터 생성 (실제 데이터 연동 전)
+│       ├── data_provider.py  #   목업/실제 데이터 출처를 캡슐화하는 단일 진입점
+│       ├── style.py          #   위험도 색상 등 시각 상수
+│       ├── components.py     #   지도 · 범례 · KPI · 상세 패널
+│       └── app.py            #   메인 엔트리포인트
 ├── tests/
 │   └── test_baseline_pipeline.py  # 합성 데이터로 베이스라인 파이프라인 구조 검증
 ├── models/baseline/          # 학습된 모델 아티팩트 (.joblib, 커밋 제외)
@@ -245,7 +250,7 @@ python -m src.models.gnn.train
 # RAG 벡터 저장소 구축
 python -m src.rag.build_index
 
-# 대시보드 실행
+# 대시보드 실행 (지금은 목업 데이터 — 지도·필터·챗봇 UI 확인용)
 streamlit run src/dashboard/app.py
 ```
 
@@ -259,6 +264,8 @@ streamlit run src/dashboard/app.py
 - [x] 환경 재현성 확보 — 자동 셋업 스크립트, `.python-version`
 - [x] 베이스라인 파이프라인 구현 — RandomForest, XGBoost, PR-AUC 평가, SHAP 해석
       (합성 데이터로 구조 검증 완료, 실제 데이터 학습은 전처리 완료 후)
+- [x] Streamlit 대시보드 목업 뼈대 — 지도·필터·KPI·구간 상세·챗봇 UI
+      (합성 데이터, `AppTest`로 헤드리스 검증 완료, 실제 데이터 연동 전)
 - [ ] 공공데이터 수집 및 `data/raw/` 배치
 - [ ] 전처리 구현 — 구간 분할 및 피처 결합
 - [ ] EDA
@@ -266,7 +273,7 @@ streamlit run src/dashboard/app.py
 - [ ] GNN (GCN / GraphSAGE)
 - [ ] RAG 파이프라인
 - [ ] 정책 브리핑 생성
-- [ ] Streamlit 대시보드
+- [ ] 대시보드 실제 데이터 연동
 
 ## 향후 확장 (이번 범위 외)
 
